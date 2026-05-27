@@ -26,6 +26,8 @@ public class NeesAinaZombieRuntime : ModuleRules
 			new string[]
 			{
 				"Core",
+				"NavigationSystem",
+				"GameAI_Zombie"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -38,8 +40,7 @@ public class NeesAinaZombieRuntime : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-				"AIModule",
-				"NavigationSystem"
+				"AIModule"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
