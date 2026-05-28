@@ -87,7 +87,6 @@ void USteeringTask::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemor
         }
 
         case ESurvivorSteeringState::SeekItem:
-        case ESurvivorSteeringState::LootingHouse:
         {
             IsSeekingTarget = true;
             AActor* Item = Cast<AActor>(BlackboardComp->GetValueAsObject(FName("TargetItem")));
@@ -95,10 +94,19 @@ void USteeringTask::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemor
             {
                 Target.Position = FVector2D(Item->GetActorLocation().X, Item->GetActorLocation().Y);
             }
-            else if (BlackboardComp->IsVectorValueSet(FName("TargetLocation")))
+
+            SeekBehavior->SetTarget(Target);
+            *BlendedEngine->GetWeight(SeekBehavior) = 1.0f;
+            break;
+        }
+        
+        case ESurvivorSteeringState::LootingHouse:
+        {
+            IsSeekingTarget = true;
+            AActor* House = Cast<AActor>(BlackboardComp->GetValueAsObject(FName("TargetHouse")));
+            if (House)
             {
-                FVector Loc = BlackboardComp->GetValueAsVector(FName("TargetLocation"));
-                Target.Position = FVector2D(Loc.X, Loc.Y);
+                Target.Position = FVector2D(House->GetActorLocation().X, House->GetActorLocation().Y);
             }
 
             SeekBehavior->SetTarget(Target);
@@ -144,5 +152,18 @@ void USteeringTask::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemor
         FRotator TargetRot = Direction3D.Rotation();
         FRotator SmoothRot = FMath::RInterpTo(Survivor->GetActorRotation(), TargetRot, DeltaSeconds, 8.5f);
         Survivor->SetActorRotation(SmoothRot);
+    }
+    
+    if (IsSeekingTarget)
+    {
+        FVector CurrentLoc = Survivor->GetActorLocation();
+        FVector2D CurrentLoc2D = FVector2D(CurrentLoc.X, CurrentLoc.Y);
+        
+        float DistanceSq = FVector2D::DistSquared(CurrentLoc2D, Target.Position);
+
+        if (DistanceSq <= 10000.f)
+        {
+            FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
+        }
     }
 }
