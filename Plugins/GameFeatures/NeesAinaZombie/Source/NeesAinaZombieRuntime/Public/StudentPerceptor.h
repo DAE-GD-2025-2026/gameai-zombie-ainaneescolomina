@@ -10,6 +10,9 @@
 #include "Perception/AISense_Damage.h"
 #include "StudentPerceptor.generated.h"
 
+class ABaseItem;
+class AHouse;
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class NEESAINAZOMBIERUNTIME_API UStudentPerceptor : public UActorComponent
 {
@@ -23,4 +26,17 @@ public:
 
 	UFUNCTION()
 	virtual void OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+	
+	// MEMORY
+	UPROPERTY(Transient)
+	TArray<ABaseItem*> KnownItems;
+	UPROPERTY(Transient)
+	TArray<AHouse*> DiscoveredHouses;
+	UPROPERTY(Transient)
+	TArray<AHouse*> VisitedHouses;
+
+private:
+	void CheckZombie(AActor* Zombie, bool IsSensed, class UBlackboardComponent* BBComp);
+	void RecordItem(AActor* Item, bool IsSensed, class UBlackboardComponent* BBComp);
+	void RecordHouse(AActor* House, bool IsSensed, class UBlackboardComponent* BBComp);
 };

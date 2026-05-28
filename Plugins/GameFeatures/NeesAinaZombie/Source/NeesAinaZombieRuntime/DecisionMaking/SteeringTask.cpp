@@ -7,7 +7,7 @@
 USteeringTask::USteeringTask()
 {
     NodeName = "Execute Blended Steering";
-    bNotifyTick = true; // Ensures TickTask triggers every single frame
+    bNotifyTick = true;
 
     InitializeSteering();
 }
@@ -37,12 +37,11 @@ EBTNodeResult::Type USteeringTask::ExecuteTask(UBehaviorTreeComponent& OwnerComp
 void USteeringTask::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
     AAIController* AIController = OwnerComp.GetAIOwner();
-    UBlackboardComponent* BBComp = OwnerComp.GetBlackboardComponent();
-    if (!AIController || !BBComp) return;
+    UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();
+    if (!AIController || !BlackboardComp) return;
 
-    APawn* Pawn = AIController->GetPawn();
-    if (!Pawn) return;
-    //ESurvivorSteeringState CurrentState = static_cast<ESurvivorSteeringState>(BBComp->GetValueAsEnum(FName("SteeringState")));
+    APawn* Survivor = AIController->GetPawn();
+    if (!Survivor) return;
 
     // Clear out all weights
     *BlendedEngine->GetWeight(SeekBehavior) = 0.0f;
@@ -50,41 +49,55 @@ void USteeringTask::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemor
     *BlendedEngine->GetWeight(EvadeBehavior) = 0.0f;
     *BlendedEngine->GetWeight(WanderBehavior) = 0.0f;
 
-    // 3. Gather target variables from the Blackboard depending on the chosen State
     FTargetData Target;
-    bool bThreatActive = false;
-
+    bool UnderAttack = false;
+    bool IsSeekingTarget = false;
+    bool InPurgeZone = BlackboardComp->GetValueAsBool(FName("InPurgeZone"));
+    
     switch (CurrentState)
     {
         case ESurvivorSteeringState::FleeEnemy:
         {
-            AActor* Enemy = Cast<AActor>(BBComp->GetValueAsObject(FName("TargetEnemy")));
+            AActor* Enemy = Cast<AActor>(BlackboardComp->GetValueAsObject(FName("TargetEnemy")));
             if (Enemy)
             {
                 Target.Position = FVector2D(Enemy->GetActorLocation().X, Enemy->GetActorLocation().Y);
                 Target.LinearVelocity = FVector2D(Enemy->GetVelocity().X, Enemy->GetVelocity().Y);
-                bThreatActive = true;
+                UnderAttack = true;
             }
             
-            // Set the active fleeing weights seamlessly
             FleeBehavior->SetTarget(Target);
             EvadeBehavior->SetTarget(Target);
             *BlendedEngine->GetWeight(FleeBehavior) = 0.80f;
             *BlendedEngine->GetWeight(WanderBehavior) = 0.20f;
             break;
         }
+        
+        case ESurvivorSteeringState::FleePurgeZone:
+        {
+            if (BlackboardComp->IsVectorValueSet(FName("PurgeZoneLocation")))
+            {
+                FVector ZoneLoc = BlackboardComp->GetValueAsVector(FName("PurgeZoneLocation"));
+                Target.Position = FVector2D(ZoneLoc.X, ZoneLoc.Y);
+            }
+        
+            FleeBehavior->SetTarget(Target);
+            *BlendedEngine->GetWeight(FleeBehavior) = 1.0f; 
+            break;
+        }
 
         case ESurvivorSteeringState::SeekItem:
         case ESurvivorSteeringState::LootingHouse:
         {
-            AActor* Item = Cast<AActor>(BBComp->GetValueAsObject(FName("TargetItem")));
+            IsSeekingTarget = true;
+            AActor* Item = Cast<AActor>(BlackboardComp->GetValueAsObject(FName("TargetItem")));
             if (Item)
             {
                 Target.Position = FVector2D(Item->GetActorLocation().X, Item->GetActorLocation().Y);
             }
-            else if (BBComp->IsVectorValueSet(FName("TargetLocation")))
+            else if (BlackboardComp->IsVectorValueSet(FName("TargetLocation")))
             {
-                FVector Loc = BBComp->GetValueAsVector(FName("TargetLocation"));
+                FVector Loc = BlackboardComp->GetValueAsVector(FName("TargetLocation"));
                 Target.Position = FVector2D(Loc.X, Loc.Y);
             }
 
@@ -101,40 +114,35 @@ void USteeringTask::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemor
         }
     }
 
-    // 4. Calculate the Blended Physics output from your modular classes
-    SteeringOutput Output = BlendedEngine->CalculateSteering(DeltaSeconds, Pawn);
+    SteeringOutput Output = BlendedEngine->CalculateSteering(DeltaSeconds, Survivor);
 
-    // 5. Handle Context-Driven Sprinting (Only use stamina when necessary)
-    if (ASurvivorPawn* Survivor = Cast<ASurvivorPawn>(Pawn))
+    if (ASurvivorPawn* SurvivorPawn = Cast<ASurvivorPawn>(Survivor))
     {
-        bool bWantSprint = false;
-        if (bThreatActive)
+        bool NeedSprint = false;
+        if (UnderAttack || InPurgeZone)
         {
-            bWantSprint = BBComp->GetValueAsBool(FName("IsHeavyZombie")) || 
-                          BBComp->GetValueAsBool(FName("IsRunnerZombie")) || 
-                          BBComp->GetValueAsBool(FName("IsInPurgeZone"));
+            NeedSprint = BlackboardComp->GetValueAsBool(FName("IsHeavyZombie")) || 
+                          BlackboardComp->GetValueAsBool(FName("IsRunnerZombie")) || 
+                          InPurgeZone;
         }
         
-        // Safety check to ensure we have stamina left to run
-        if (UStaminaComponent* Stamina = Survivor->FindComponentByClass<UStaminaComponent>())
+        if (UStaminaComponent* Stamina = SurvivorPawn->FindComponentByClass<UStaminaComponent>())
         {
-            if (Stamina->GetCurrentStamina() <= 0.f) bWantSprint = false;
+            if (Stamina->GetCurrentStamina() <= 0.f) NeedSprint = false;
         }
         
-        bWantSprint ? Survivor->StartRunning() : Survivor->StopRunning();
+        NeedSprint ? SurvivorPawn->StartRunning() : SurvivorPawn->StopRunning();
     }
 
-    // 6. Apply Movement Input and Align Character Looking Rotation
     if (Output.IsValid && !Output.LinearVelocity.IsNearlyZero())
     {
         FVector Direction3D = FVector(Output.LinearVelocity.X, Output.LinearVelocity.Y, 0.f);
         Direction3D.Normalize();
 
-        Pawn->AddMovementInput(Direction3D, 1.0f);
+        Survivor->AddMovementInput(Direction3D, 1.0f);
 
-        // Turn smoothly toward our target movement vector direction
         FRotator TargetRot = Direction3D.Rotation();
-        FRotator SmoothRot = FMath::RInterpTo(Pawn->GetActorRotation(), TargetRot, DeltaSeconds, 8.5f);
-        Pawn->SetActorRotation(SmoothRot);
+        FRotator SmoothRot = FMath::RInterpTo(Survivor->GetActorRotation(), TargetRot, DeltaSeconds, 8.5f);
+        Survivor->SetActorRotation(SmoothRot);
     }
 }

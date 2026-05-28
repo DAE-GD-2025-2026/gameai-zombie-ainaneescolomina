@@ -6,8 +6,9 @@
 UENUM(BlueprintType)
 enum class ESurvivorSteeringState : uint8
 {
-	Wander       UMETA(DisplayName = "Wander"),
-	SeekItem     UMETA(DisplayName = "SeekItem"),
-	FleeEnemy    UMETA(DisplayName = "FleeEnemy"),
-	LootingHouse UMETA(DisplayName = "LootingHouse")
+	Wander        UMETA(DisplayName = "Wander"),
+	SeekItem      UMETA(DisplayName = "SeekItem"),
+	FleeEnemy     UMETA(DisplayName = "FleeEnemy"),
+	LootingHouse  UMETA(DisplayName = "LootingHouse"),
+	FleePurgeZone UMETA(DisplayName = "FleePurgeZone")
 };
