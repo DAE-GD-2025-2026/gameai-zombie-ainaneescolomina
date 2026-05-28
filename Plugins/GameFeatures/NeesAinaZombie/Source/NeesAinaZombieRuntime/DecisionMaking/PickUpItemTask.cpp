@@ -51,11 +51,11 @@ EBTNodeResult::Type UPickUpItemTask::ExecuteTask(UBehaviorTreeComponent& OwnerCo
 		if (!bGrabSuccess)return EBTNodeResult::Failed;
 		TargetItem->SetActorHiddenInGame(true);
 		TargetItem->SetActorEnableCollision(false);
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Orange, TEXT("ITEM PICKED UP"));
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("ITEM PICKED UP"));
 	}
 	else
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Orange, TEXT("INVENTORY FULL: CANNOT PICK UP"));
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("INVENTORY FULL: CANNOT PICK UP"));
 		return EBTNodeResult::Failed;
 	}
 
@@ -65,6 +65,6 @@ EBTNodeResult::Type UPickUpItemTask::ExecuteTask(UBehaviorTreeComponent& OwnerCo
 	}
 	
 	BlackboardComp->ClearValue(FName("TargetItem"));
-	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, TEXT("SUCCESSFULLY LOOTED ITEM!"));
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Cyan, TEXT("SUCCESSFULLY LOOTED ITEM!"));
 	return EBTNodeResult::Succeeded;
 }

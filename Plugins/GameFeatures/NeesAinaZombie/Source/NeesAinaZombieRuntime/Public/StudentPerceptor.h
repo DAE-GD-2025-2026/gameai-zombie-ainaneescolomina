@@ -36,7 +36,7 @@ public:
 	TArray<AHouse*> VisitedHouses;
 
 private:
-	void CheckZombie(AActor* Zombie, bool IsSensed, class UBlackboardComponent* BBComp);
-	void RecordItem(AActor* Item, bool IsSensed, class UBlackboardComponent* BBComp);
-	void RecordHouse(AActor* House, bool IsSensed, class UBlackboardComponent* BBComp);
+	void CheckZombie(AActor* Zombie, bool IsSensed, class UBlackboardComponent* BlackboardComp);
+	void RecordItem(AActor* Item, bool IsSensed, class UBlackboardComponent* BlackboardComp);
+	void RecordHouse(AActor* House, bool IsSensed, class UBlackboardComponent* BlackboardComp);
 };

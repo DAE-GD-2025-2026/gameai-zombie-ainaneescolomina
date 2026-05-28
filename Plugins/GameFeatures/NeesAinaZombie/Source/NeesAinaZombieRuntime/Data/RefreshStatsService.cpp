@@ -18,27 +18,27 @@ void URefreshStatsService::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* No
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
 	AAIController* AIController = OwnerComp.GetAIOwner();
-	UBlackboardComponent* BBComp = OwnerComp.GetBlackboardComponent();
-	if (!AIController || !BBComp) return;
+	UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();
+	if (!AIController || !BlackboardComp) return;
 
-	APawn* Pawn = AIController->GetPawn();
-	if (!Pawn) return;
+	APawn* Survivor = AIController->GetPawn();
+	if (!Survivor) return;
 
-	if (UHealthComponent* HealthComp = Pawn->FindComponentByClass<UHealthComponent>())
+	if (UHealthComponent* HealthComp = Survivor->FindComponentByClass<UHealthComponent>())
 	{
 		float CurrentHealth = HealthComp->GetHealth(); 
-		BBComp->SetValueAsFloat(FName("HealthStat"), CurrentHealth);
+		BlackboardComp->SetValueAsFloat(FName("HealthStat"), CurrentHealth);
 	}
 
-	if (UStaminaComponent* StaminaComp = Pawn->FindComponentByClass<UStaminaComponent>())
+	if (UStaminaComponent* StaminaComp = Survivor->FindComponentByClass<UStaminaComponent>())
 	{
 		float CurrentEnergy = StaminaComp->GetCurrentStamina(); 
-		BBComp->SetValueAsFloat(FName("EnergyStat"), CurrentEnergy);
+		BlackboardComp->SetValueAsFloat(FName("EnergyStat"), CurrentEnergy);
 	}
 	
 	bool HasFood = false;
 	bool HasMedkit = false;
-	if (UInventoryComponent* InvComp = Pawn->FindComponentByClass<UInventoryComponent>())
+	if (UInventoryComponent* InvComp = Survivor->FindComponentByClass<UInventoryComponent>())
 	{
 		for (ABaseItem* Item : InvComp->GetInventory())
 		{
@@ -61,6 +61,6 @@ void URefreshStatsService::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* No
 		}
 	}
 
-	BBComp->SetValueAsBool(FName("HasFood"), HasFood);
-	BBComp->SetValueAsBool(FName("HasMedikit"), HasMedkit);
+	BlackboardComp->SetValueAsBool(FName("HasFood"), HasFood);
+	BlackboardComp->SetValueAsBool(FName("HasMedikit"), HasMedkit);
 }

@@ -1,6 +1,5 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "StudentPerceptor.h"
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -53,27 +52,6 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 	
 	//GEngine->AddOnScreenDebugMessage(-1, 0.5f, FColor::Green, TEXT("I Something!"));
 	
-	// DAMAGE SENSE - 360 DEGREE VISION (feedback)
-	if (Stimulus.Type == UAISense::GetSenseID<UAISense_Damage>())
-	{
-		// took damage!
-		if (ABaseZombie* Attacker = Cast<ABaseZombie>(Actor))
-		{
-			BlackboardComp->SetValueAsObject(FName("NearestZombie"), Attacker);
-			
-			// check for Heavy zombie
-			if (Attacker->GetName().Contains("Heavy")) {
-				BlackboardComp->SetValueAsBool(FName("IsHeavyZombie"), true);
-			} else {
-				BlackboardComp->SetValueAsBool(FName("IsHeavyZombie"), false);
-			}
-
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, TEXT("OUCH! BEHIND USE!"));
-			
-			return; 
-		}
-	}
-	
 	if (Actor->IsA(ABaseZombie::StaticClass()))
 	{
 		CheckZombie(Actor, isSensed, BlackboardComp);
@@ -92,35 +70,37 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 		}
 		else if (Actor->IsA(APurgeZone::StaticClass()))
 		{
+			//auto PurgeZone = Cast<APurgeZone>(Actor);
 			BlackboardComp->SetValueAsBool(FName("InPurgeZone"), isSensed);
+			BlackboardComp->SetValueAsVector(FName("PurgeZoneLocation"), Actor->GetActorLocation());
 		}
 	}
 }
 
-void UStudentPerceptor::CheckZombie(AActor* Zombie, bool IsSensed, class UBlackboardComponent* BBComp)
+void UStudentPerceptor::CheckZombie(AActor* Zombie, bool IsSensed, class UBlackboardComponent* BlackboardComp)
 {
 	if (IsSensed)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("ZOMBIE!"));
-		BBComp->SetValueAsObject(FName("TargetEnemy"), Zombie);
+		BlackboardComp->SetValueAsObject(FName("TargetEnemy"), Zombie);
         
 		FString const ZombieName = Zombie->GetName();
 		bool const bIsHeavy = ZombieName.Contains(TEXT("Heavy"));
 		bool const bIsRunner = ZombieName.Contains(TEXT("Runner"));
         
-		BBComp->SetValueAsBool(FName("IsHeavyZombie"), bIsHeavy);
-		BBComp->SetValueAsBool(FName("IsRunnerZombie"), bIsRunner);
+		BlackboardComp->SetValueAsBool(FName("IsHeavyZombie"), bIsHeavy);
+		BlackboardComp->SetValueAsBool(FName("IsRunnerZombie"), bIsRunner);
 	}
-	else if (BBComp->GetValueAsObject(FName("TargetEnemy")) == Zombie)
+	else if (BlackboardComp->GetValueAsObject(FName("TargetEnemy")) == Zombie)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TEXT("FORGUET ZOMBIE!"));
-		BBComp->ClearValue(FName("TargetEnemy"));
-		BBComp->SetValueAsBool(FName("IsHeavyZombie"), false);
-		BBComp->SetValueAsBool(FName("IsRunnerZombie"), false);
+		BlackboardComp->ClearValue(FName("TargetEnemy"));
+		BlackboardComp->SetValueAsBool(FName("IsHeavyZombie"), false);
+		BlackboardComp->SetValueAsBool(FName("IsRunnerZombie"), false);
 	}
 }
 
-void UStudentPerceptor::RecordItem(AActor* Item, bool IsSensed, class UBlackboardComponent* BBComp)
+void UStudentPerceptor::RecordItem(AActor* Item, bool IsSensed, class UBlackboardComponent* BlackboardComp)
 {
 	ABaseItem* CastItem = Cast<ABaseItem>(Item);
 	if (!CastItem) return;
@@ -130,8 +110,16 @@ void UStudentPerceptor::RecordItem(AActor* Item, bool IsSensed, class UBlackboar
     KnownItems.RemoveAll([](ABaseItem* I) { return !IsValid(I); });
 
 	AAIController* AIController = Cast<AAIController>(GetOwner());
-	APawn* Pawn = AIController ? AIController->GetPawn() : nullptr;
-	UInventoryComponent* InventoryComp = Pawn ? Pawn->FindComponentByClass<UInventoryComponent>() : nullptr;
+	if (!AIController)
+	{
+		if (APawn* OwnerPawn = Cast<APawn>(GetOwner()))
+		{
+			AIController = Cast<AAIController>(OwnerPawn->GetController());
+		}
+	}
+	APawn* Survivor = AIController ? AIController->GetPawn<APawn>() : Cast<APawn>(GetOwner());
+	UInventoryComponent* InventoryComp = Survivor ? Survivor->FindComponentByClass<UInventoryComponent>() : nullptr;
+    
 	int EmptySlots = 0;
 
 	if (InventoryComp)
@@ -141,9 +129,19 @@ void UStudentPerceptor::RecordItem(AActor* Item, bool IsSensed, class UBlackboar
 			if (SlotItem == nullptr) EmptySlots++;
 		}
 	}
-	
-	if (KnownItems.Num() <= 0)GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TEXT("ITEM NOT KNOWN"));
-	if (EmptySlots <= 0)GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TEXT("ITEM NO SLOTS"));
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TEXT("ERROR: Inventory Component Not Found!"));
+		return;
+	}
+
+	if (InventoryComp)
+	{
+		for (ABaseItem* SlotItem : InventoryComp->GetInventory())
+		{
+			if (SlotItem == nullptr) EmptySlots++;
+		}
+	}
 	
     if (KnownItems.Num() > 0 && EmptySlots > 0)
     {
@@ -177,16 +175,15 @@ void UStudentPerceptor::RecordItem(AActor* Item, bool IsSensed, class UBlackboar
 
         if (BestItem)
         {
-        	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("ITEM!"));
-            BBComp->SetValueAsObject(FName("TargetItem"), BestItem);
+            BlackboardComp->SetValueAsObject(FName("TargetItem"), BestItem);
             return;
         }
     }
 	
-    BBComp->ClearValue(FName("TargetItem"));
+    BlackboardComp->ClearValue(FName("TargetItem"));
 }
 
-void UStudentPerceptor::RecordHouse(AActor* House, bool IsSensed, class UBlackboardComponent* BBComp)
+void UStudentPerceptor::RecordHouse(AActor* House, bool IsSensed, class UBlackboardComponent* BlackboardComp)
 {
 	AHouse* CastHouse = Cast<AHouse>(House);
 	if (!CastHouse) return;
@@ -228,7 +225,7 @@ void UStudentPerceptor::RecordHouse(AActor* House, bool IsSensed, class UBlackbo
 		if (FinalHouseTarget)
 		{
 			//GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("HOUSE!"));
-			BBComp->SetValueAsObject(FName("TargetHouse"), FinalHouseTarget);
+			BlackboardComp->SetValueAsObject(FName("TargetHouse"), FinalHouseTarget);
 		}
 	}
 }
