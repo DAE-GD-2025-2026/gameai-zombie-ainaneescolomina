@@ -50,7 +50,17 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 	UBlackboardComponent* BlackboardComp = AIController->GetBlackboardComponent();
 	if (!BlackboardComp) return;
 	
-	//GEngine->AddOnScreenDebugMessage(-1, 0.5f, FColor::Green, TEXT("I Something!"));
+	if (Stimulus.Type == UAISense::GetSenseID<UAISense_Damage>())
+	{
+		if (Actor->IsA(ABaseZombie::StaticClass()))
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Orange, TEXT("AMBUSHED! TAKING DAMAGE FROM BEHIND!"));
+            
+			// Force this attacker to become our active tracked target immediately
+			CheckZombie(Actor, true, BlackboardComp);
+			return; // Exit early since we handled the ambush input
+		}
+	}
 	
 	if (Actor->IsA(ABaseZombie::StaticClass()))
 	{
@@ -79,25 +89,81 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 
 void UStudentPerceptor::CheckZombie(AActor* Zombie, bool IsSensed, class UBlackboardComponent* BlackboardComp)
 {
+	float CurrentTime = GetWorld()->GetTimeSeconds();
+
 	if (IsSensed)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("ZOMBIE!"));
-		BlackboardComp->SetValueAsObject(FName("TargetEnemy"), Zombie);
-        
-		FString const ZombieName = Zombie->GetName();
-		bool const bIsHeavy = ZombieName.Contains(TEXT("Heavy"));
-		bool const bIsRunner = ZombieName.Contains(TEXT("Runner"));
-        
-		BlackboardComp->SetValueAsBool(FName("IsHeavyZombie"), bIsHeavy);
-		BlackboardComp->SetValueAsBool(FName("IsRunnerZombie"), bIsRunner);
+		TrackedZombies.FindOrAdd(Zombie) = CurrentTime;
+
+		if (BlackboardComp->GetValueAsObject(FName("TargetEnemy")) == nullptr)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("NEW THREAT LOCKED!"));
+			BlackboardComp->SetValueAsObject(FName("TargetEnemy"), Zombie);
+            
+			FString const ZombieName = Zombie->GetName();
+			BlackboardComp->SetValueAsBool(FName("IsHeavyZombie"), ZombieName.Contains(TEXT("Heavy")));
+			BlackboardComp->SetValueAsBool(FName("IsRunnerZombie"), ZombieName.Contains(TEXT("Runner")));
+		}
 	}
-	else if (BlackboardComp->GetValueAsObject(FName("TargetEnemy")) == Zombie)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TEXT("FORGUET ZOMBIE!"));
-		BlackboardComp->ClearValue(FName("TargetEnemy"));
-		BlackboardComp->SetValueAsBool(FName("IsHeavyZombie"), false);
-		BlackboardComp->SetValueAsBool(FName("IsRunnerZombie"), false);
-	}
+    
+	ForgetExpiredZombies(BlackboardComp);
+}
+
+void UStudentPerceptor::ForgetExpiredZombies(class UBlackboardComponent* BlackboardComp)
+{
+	float CurrentTime = GetWorld()->GetTimeSeconds();
+    
+    TArray<AActor*> Keys;
+    TrackedZombies.GetKeys(Keys);
+    for (AActor* ZombieKey : Keys)
+    {
+        if (!IsValid(ZombieKey))
+        {
+            TrackedZombies.Remove(ZombieKey);
+        }
+    }
+
+    AActor* CurrentTarget = Cast<AActor>(BlackboardComp->GetValueAsObject(FName("TargetEnemy")));
+
+    if (CurrentTarget && TrackedZombies.Contains(CurrentTarget))
+    {
+        float LastSeenTime = TrackedZombies[CurrentTarget];
+        
+        if (CurrentTime - LastSeenTime > ZombieMemoryDuration)
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TEXT("THREAT LOST: Cleared from memory."));
+            
+            TrackedZombies.Remove(CurrentTarget);
+            BlackboardComp->ClearValue(FName("TargetEnemy"));
+            BlackboardComp->SetValueAsBool(FName("IsHeavyZombie"), false);
+            BlackboardComp->SetValueAsBool(FName("IsRunnerZombie"), false);
+            CurrentTarget = nullptr;
+        }
+    }
+
+    // Fallback
+    if (CurrentTarget == nullptr && TrackedZombies.Num() > 0)
+    {
+        AActor* BestNextThreat = nullptr;
+        float MostRecentTime = 0.0f;
+
+        for (auto& Elem : TrackedZombies)
+        {
+            if (Elem.Value > MostRecentTime)
+            {
+                MostRecentTime = Elem.Value;
+                BestNextThreat = Elem.Key;
+            }
+        }
+
+        if (BestNextThreat)
+        {
+            BlackboardComp->SetValueAsObject(FName("TargetEnemy"), BestNextThreat);
+            FString const ZombieName = BestNextThreat->GetName();
+            BlackboardComp->SetValueAsBool(FName("IsHeavyZombie"), ZombieName.Contains(TEXT("Heavy")));
+            BlackboardComp->SetValueAsBool(FName("IsRunnerZombie"), ZombieName.Contains(TEXT("Runner")));
+        }
+    }
 }
 
 void UStudentPerceptor::RecordItem(AActor* Item, bool IsSensed, class UBlackboardComponent* BlackboardComp)

@@ -34,9 +34,15 @@ public:
 	TArray<AHouse*> DiscoveredHouses;
 	UPROPERTY(Transient)
 	TArray<AHouse*> VisitedHouses;
+	
+	UPROPERTY()
+	TMap<AActor*, float> TrackedZombies;
+	const float ZombieMemoryDuration = 1.2f; // How long do you remember a Zombie for
 
 private:
 	void CheckZombie(AActor* Zombie, bool IsSensed, class UBlackboardComponent* BlackboardComp);
+	void ForgetExpiredZombies(class UBlackboardComponent* BlackboardComp);
+	
 	void RecordItem(AActor* Item, bool IsSensed, class UBlackboardComponent* BlackboardComp);
 	void RecordHouse(AActor* House, bool IsSensed, class UBlackboardComponent* BlackboardComp);
 };

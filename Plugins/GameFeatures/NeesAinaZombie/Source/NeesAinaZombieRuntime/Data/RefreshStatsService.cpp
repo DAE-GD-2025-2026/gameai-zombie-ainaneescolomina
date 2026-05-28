@@ -4,6 +4,7 @@
 #include "Common/HealthComponent.h"
 #include "Common/InventoryComponent.h"
 #include "Common/StaminaComponent.h" 
+#include "Items/BaseItem.h"
 
 URefreshStatsService::URefreshStatsService()
 {
@@ -38,29 +39,41 @@ void URefreshStatsService::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* No
 	
 	bool HasFood = false;
 	bool HasMedkit = false;
+	bool HasWeapon = false;
 	if (UInventoryComponent* InvComp = Survivor->FindComponentByClass<UInventoryComponent>())
 	{
 		for (ABaseItem* Item : InvComp->GetInventory())
 		{
 			if (Item && Item->GetValue() > 0)
 			{
-				if (Item->GetItemType() == EItemType::Food)
+				switch (Item->GetItemType())
 				{
+				case EItemType::Food:
 					HasFood = true;
-				}
-				else if (Item->GetItemType() == EItemType::Medkit)
-				{
+					break;
+
+				case EItemType::Medkit:
 					HasMedkit = true;
+					break;
+
+				case EItemType::Pistol:
+				case EItemType::Shotgun:
+					HasWeapon = true;
+					break;
+
+				default:
+					break;
 				}
-			}
             
-			if (HasFood && HasMedkit)
-			{
-				break;
+				if (HasFood && HasMedkit && HasWeapon)
+				{
+					break;
+				}
 			}
 		}
-	}
 
-	BlackboardComp->SetValueAsBool(FName("HasFood"), HasFood);
-	BlackboardComp->SetValueAsBool(FName("HasMedikit"), HasMedkit);
+		BlackboardComp->SetValueAsBool(FName("HasFood"), HasFood);
+		BlackboardComp->SetValueAsBool(FName("HasMedikit"), HasMedkit);
+		BlackboardComp->SetValueAsBool(FName("HasWeapon"), HasWeapon);
+	}
 }
