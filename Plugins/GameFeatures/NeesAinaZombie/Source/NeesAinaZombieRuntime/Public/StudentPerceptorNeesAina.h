@@ -42,8 +42,6 @@ public:
 	// MEMORY
 	UPROPERTY(Transient)
 	TArray<ABaseItem*> KnownItems;
-	UPROPERTY(Transient)
-	TArray<AHouse*> VisitedHouses;
 
 	UPROPERTY()
 	TMap<AHouse*, FHouseData> HouseMemoryMap;

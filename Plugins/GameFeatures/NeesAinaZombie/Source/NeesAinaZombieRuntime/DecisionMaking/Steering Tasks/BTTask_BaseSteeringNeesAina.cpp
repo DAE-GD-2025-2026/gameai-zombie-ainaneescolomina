@@ -101,7 +101,8 @@ void UBTTask_BaseSteeringNeesAina::TickTask(UBehaviorTreeComponent& OwnerComp, u
                 DetourDuration = 0.75f;
                 StuckDuration = 0.0f;
                 
-                //StuckAngleModifier += 45.0f;
+                if (StuckDuration >= (StuckThresholdTime * 3))
+                    StuckAngleModifier += 45.0f;
 
                 FTargetData DetourTarget;
                 DetourTarget.Position = FVector2D(DetourVector.X, DetourVector.Y);
