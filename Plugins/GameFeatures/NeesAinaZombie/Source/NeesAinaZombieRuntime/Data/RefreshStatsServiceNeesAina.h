@@ -2,15 +2,15 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/BTService.h"
-#include "RefreshStatsService.generated.h"
+#include "RefreshStatsServiceNeesAina.generated.h"
 
 UCLASS()
-class NEESAINAZOMBIERUNTIME_API URefreshStatsService : public UBTService
+class NEESAINAZOMBIERUNTIME_API URefreshStatsServiceNeesAina : public UBTService
 {
 	GENERATED_BODY()
 
 public:
-	URefreshStatsService();
+	URefreshStatsServiceNeesAina();
 
 protected:
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;

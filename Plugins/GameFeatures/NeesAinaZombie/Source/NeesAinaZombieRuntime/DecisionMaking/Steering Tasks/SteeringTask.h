@@ -4,7 +4,7 @@
 #include "BehaviorTree/BTTaskNode.h"
 
 #include "../Movement/SurvivorStates.h"
-#include "../Movement/BlendedSteering.h"
+#include "../Movement/BlendedSteeringNeesAina.h"
 
 #include "SteeringTask.generated.h"
 
@@ -23,7 +23,7 @@ protected:
 	virtual void TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 	
 private:
-	TUniquePtr<BlendedSteering> BlendedEngine;
+	TUniquePtr<BlendedSteeringNeesAina> BlendedEngine;
 	Seek* SeekBehavior = nullptr;
 	Flee* FleeBehavior = nullptr;
 	Evade* EvadeBehavior = nullptr;

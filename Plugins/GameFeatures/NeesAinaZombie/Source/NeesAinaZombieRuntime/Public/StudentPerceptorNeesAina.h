@@ -8,19 +8,19 @@
 #include "Perception/AISenseConfig_Sight.h"
 #include "Perception/AISenseConfig_Damage.h"
 #include "Perception/AISense_Damage.h"
-#include "StudentPerceptor.generated.h"
+#include "StudentPerceptorNeesAina.generated.h"
 
 class ABaseItem;
 class AHouse;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class NEESAINAZOMBIERUNTIME_API UStudentPerceptor : public UActorComponent
+class NEESAINAZOMBIERUNTIME_API UStudentPerceptorNeesAina : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this component's properties
-	UStudentPerceptor();
+	UStudentPerceptorNeesAina();
 	
 	virtual void BeginPlay() override;
 
@@ -37,7 +37,7 @@ public:
 	
 	UPROPERTY()
 	TMap<AActor*, float> TrackedZombies;
-	const float ZombieMemoryDuration = 1.2f; // How long do you remember a Zombie for
+	const float ZombieMemoryDuration = 0.8f; // How long do you remember a Zombie for
 
 private:
 	void CheckZombie(AActor* Zombie, bool IsSensed, class UBlackboardComponent* BlackboardComp);

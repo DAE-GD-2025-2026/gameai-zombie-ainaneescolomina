@@ -1,13 +1,13 @@
-﻿#include "BlendedSteering.h"
+﻿#include "BlendedSteeringNeesAina.h"
 #include <algorithm>
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Character.h"
 
-BlendedSteering::BlendedSteering(const std::vector<WeightedBehavior>& WeightedBehaviors)
+BlendedSteeringNeesAina::BlendedSteeringNeesAina(const std::vector<WeightedBehavior>& WeightedBehaviors)
     : WeightedBehaviors(WeightedBehaviors)
 {};
 
-SteeringOutput BlendedSteering::CalculateSteering(float DeltaT, APawn* Agent)
+SteeringOutput BlendedSteeringNeesAina::CalculateSteering(float DeltaT, APawn* Agent)
 {
     SteeringOutput BlendedOutput = {};
     BlendedOutput.IsValid = false;
@@ -53,7 +53,7 @@ SteeringOutput BlendedSteering::CalculateSteering(float DeltaT, APawn* Agent)
     return BlendedOutput;
 }
 
-float* BlendedSteering::GetWeight(ISteeringBehavior* const SteeringBehavior)
+float* BlendedSteeringNeesAina::GetWeight(ISteeringBehavior* const SteeringBehavior)
 {
     auto it = std::find_if(WeightedBehaviors.begin(), WeightedBehaviors.end(),
        [SteeringBehavior](const WeightedBehavior& Elem) { return Elem.pBehavior == SteeringBehavior; }

@@ -1,17 +1,17 @@
-﻿#include "UseWeaponTask.h"
+﻿#include "UseWeaponTaskNeesAina.h"
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Common/InventoryComponent.h"
 #include "Items/Weapon.h"
 #include "Survivor/SurvivorPawn.h"
 
-UUseWeaponTask::UUseWeaponTask()
+UUseWeaponTaskNeesAina::UUseWeaponTaskNeesAina()
 {
     NodeName = "Attack With Weapon";
     PreferredWeaponType = EItemType::Pistol; // Default
 }
 
-EBTNodeResult::Type UUseWeaponTask::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+EBTNodeResult::Type UUseWeaponTaskNeesAina::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
     AAIController* AIController = OwnerComp.GetAIOwner();
     if (!AIController) return EBTNodeResult::Failed;

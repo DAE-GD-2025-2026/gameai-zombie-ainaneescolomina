@@ -1,4 +1,4 @@
-﻿#include "RefreshStatsService.h"
+﻿#include "RefreshStatsServiceNeesAina.h"
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Common/HealthComponent.h"
@@ -6,7 +6,7 @@
 #include "Common/StaminaComponent.h" 
 #include "Items/BaseItem.h"
 
-URefreshStatsService::URefreshStatsService()
+URefreshStatsServiceNeesAina::URefreshStatsServiceNeesAina()
 {
 	NodeName = "Refresh Survivor Stats";
     
@@ -14,7 +14,7 @@ URefreshStatsService::URefreshStatsService()
 	RandomDeviation = 0.05f; // Adds tiny variance to optimize CPU overhead
 }
 
-void URefreshStatsService::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
+void URefreshStatsServiceNeesAina::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 

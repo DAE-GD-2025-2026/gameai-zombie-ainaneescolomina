@@ -1,15 +1,15 @@
-﻿#include "VisitHouseTask.h"
+﻿#include "VisitHouseTaskNeesAina.h"
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Village/House/House.h"
-#include "StudentPerceptor.h"
+#include "StudentPerceptorNeesAina.h"
 
-UVisitHouseTask::UVisitHouseTask()
+UVisitHouseTaskNeesAina::UVisitHouseTaskNeesAina()
 {
 	NodeName = "Visit House";
 }
 
-EBTNodeResult::Type UVisitHouseTask::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+EBTNodeResult::Type UVisitHouseTaskNeesAina::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	AAIController* AIController = OwnerComp.GetAIOwner();
 	UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();
@@ -24,16 +24,17 @@ EBTNodeResult::Type UVisitHouseTask::ExecuteTask(UBehaviorTreeComponent& OwnerCo
 		return EBTNodeResult::Failed;
 	}
 
-	if (UStudentPerceptor* Perceptor = Survivor->FindComponentByClass<UStudentPerceptor>())
+	if (UStudentPerceptorNeesAina* Perceptor = Survivor->FindComponentByClass<UStudentPerceptorNeesAina>())
 	{
 		Perceptor->VisitedHouses.AddUnique(TargetHouse);
 
-		// If our visited memory matches our discovered memory, wipe the slate clean!
+		/*
 		if (Perceptor->VisitedHouses.Num() >= Perceptor->DiscoveredHouses.Num())
 		{
 			Perceptor->VisitedHouses.Empty();
 			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Yellow, TEXT("ALL HOUSES VISITED! Wiping memory to loop patrol paths."));
 		}
+		*/
 	}
 
 	BlackboardComp->ClearValue(FName("TargetHouse"));

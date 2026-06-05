@@ -1,6 +1,6 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-#include "StudentPerceptor.h"
+#include "StudentPerceptorNeesAina.h"
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
@@ -14,22 +14,22 @@
 #include "Common/InventoryComponent.h"
 #include "PurgeZones/PurgeZone.h"
 
-UStudentPerceptor::UStudentPerceptor()
+UStudentPerceptorNeesAina::UStudentPerceptorNeesAina()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
-void UStudentPerceptor::BeginPlay()
+void UStudentPerceptorNeesAina::BeginPlay()
 {
 	Super::BeginPlay();
 	
 	if (auto PerceptionComp = GetOwner()->GetComponentByClass<UAIPerceptionComponent>())
 	{
-		PerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &UStudentPerceptor::OnPerceptionUpdated);
+		PerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &UStudentPerceptorNeesAina::OnPerceptionUpdated);
 	}
 }
 
-void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
+void UStudentPerceptorNeesAina::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
 	if (!Actor) return;
 
@@ -54,11 +54,11 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 	{
 		if (Actor->IsA(ABaseZombie::StaticClass()))
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Orange, TEXT("AMBUSHED! TAKING DAMAGE FROM BEHIND!"));
+			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Orange, TEXT("SOS! TAKING DAMAGE FROM BEHIND!"));
             
-			// Force this attacker to become our active tracked target immediately
+			// Force zombie to become the tracked target
 			CheckZombie(Actor, true, BlackboardComp);
-			return; // Exit early since we handled the ambush input
+			return;
 		}
 	}
 	
@@ -87,7 +87,7 @@ void UStudentPerceptor::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 	}
 }
 
-void UStudentPerceptor::CheckZombie(AActor* Zombie, bool IsSensed, class UBlackboardComponent* BlackboardComp)
+void UStudentPerceptorNeesAina::CheckZombie(AActor* Zombie, bool IsSensed, class UBlackboardComponent* BlackboardComp)
 {
 	float CurrentTime = GetWorld()->GetTimeSeconds();
 
@@ -109,7 +109,7 @@ void UStudentPerceptor::CheckZombie(AActor* Zombie, bool IsSensed, class UBlackb
 	ForgetExpiredZombies(BlackboardComp);
 }
 
-void UStudentPerceptor::ForgetExpiredZombies(class UBlackboardComponent* BlackboardComp)
+void UStudentPerceptorNeesAina::ForgetExpiredZombies(class UBlackboardComponent* BlackboardComp)
 {
 	float CurrentTime = GetWorld()->GetTimeSeconds();
     
@@ -131,7 +131,7 @@ void UStudentPerceptor::ForgetExpiredZombies(class UBlackboardComponent* Blackbo
         
         if (CurrentTime - LastSeenTime > ZombieMemoryDuration)
         {
-            GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TEXT("THREAT LOST: Cleared from memory."));
+            GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TEXT("THREAT LOST: Zombie cleared from memory."));
             
             TrackedZombies.Remove(CurrentTarget);
             BlackboardComp->ClearValue(FName("TargetEnemy"));
@@ -166,7 +166,7 @@ void UStudentPerceptor::ForgetExpiredZombies(class UBlackboardComponent* Blackbo
     }
 }
 
-void UStudentPerceptor::RecordItem(AActor* Item, bool IsSensed, class UBlackboardComponent* BlackboardComp)
+void UStudentPerceptorNeesAina::RecordItem(AActor* Item, bool IsSensed, class UBlackboardComponent* BlackboardComp)
 {
 	ABaseItem* CastItem = Cast<ABaseItem>(Item);
 	if (!CastItem) return;
@@ -249,7 +249,7 @@ void UStudentPerceptor::RecordItem(AActor* Item, bool IsSensed, class UBlackboar
     BlackboardComp->ClearValue(FName("TargetItem"));
 }
 
-void UStudentPerceptor::RecordHouse(AActor* House, bool IsSensed, class UBlackboardComponent* BlackboardComp)
+void UStudentPerceptorNeesAina::RecordHouse(AActor* House, bool IsSensed, class UBlackboardComponent* BlackboardComp)
 {
 	AHouse* CastHouse = Cast<AHouse>(House);
 	if (!CastHouse) return;

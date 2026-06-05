@@ -1,16 +1,16 @@
-﻿#include "PickUpItemTask.h"
+﻿#include "PickUpItemTaskNeesAina.h"
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Items/BaseItem.h"
-#include "StudentPerceptor.h"
+#include "StudentPerceptorNeesAina.h"
 #include "Common/InventoryComponent.h" 
 
-UPickUpItemTask::UPickUpItemTask()
+UPickUpItemTaskNeesAina::UPickUpItemTaskNeesAina()
 {
 	NodeName = "Pick Up Target Item";
 }
 
-EBTNodeResult::Type UPickUpItemTask::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+EBTNodeResult::Type UPickUpItemTaskNeesAina::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	AAIController* AIController = OwnerComp.GetAIOwner();
 	UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();
@@ -59,7 +59,7 @@ EBTNodeResult::Type UPickUpItemTask::ExecuteTask(UBehaviorTreeComponent& OwnerCo
 		return EBTNodeResult::Failed;
 	}
 
-	if (UStudentPerceptor* Perceptor = Survivor->FindComponentByClass<UStudentPerceptor>())
+	if (UStudentPerceptorNeesAina* Perceptor = Survivor->FindComponentByClass<UStudentPerceptorNeesAina>())
 	{
 		Perceptor->KnownItems.Remove(TargetItem);
 	}

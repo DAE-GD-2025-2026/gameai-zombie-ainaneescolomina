@@ -1,8 +1,8 @@
 ﻿#pragma once
 #include <vector>
-#include "SteeringBehaviors.h"
+#include "SteeringBehaviorsNeesAina.h"
 
-class BlendedSteering final : public ISteeringBehavior
+class BlendedSteeringNeesAina final : public ISteeringBehavior
 {
 public:
 	struct WeightedBehavior
@@ -14,8 +14,8 @@ public:
 		   : pBehavior(pBehavior), Weight(Weight) {};
 	};
 
-	BlendedSteering(const std::vector<WeightedBehavior>& WeightedBehaviors);
-	virtual ~BlendedSteering() override = default;
+	BlendedSteeringNeesAina(const std::vector<WeightedBehavior>& WeightedBehaviors);
+	virtual ~BlendedSteeringNeesAina() override = default;
 
 	virtual SteeringOutput CalculateSteering(float DeltaT, APawn* Agent) override;
 	float* GetWeight(ISteeringBehavior* const SteeringBehavior);

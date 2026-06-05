@@ -20,13 +20,13 @@ void USteeringTask::InitializeSteering()
     WanderBehavior = new Wander();
     EvadeBehavior->SetEvadeRadius(750.f);
 
-    std::vector<BlendedSteering::WeightedBehavior> BehaviorsList = {
-        BlendedSteering::WeightedBehavior(SeekBehavior, 0.0f),
-        BlendedSteering::WeightedBehavior(FleeBehavior, 0.0f),
-        BlendedSteering::WeightedBehavior(EvadeBehavior, 0.0f),
-        BlendedSteering::WeightedBehavior(WanderBehavior, 0.0f)
+    std::vector<BlendedSteeringNeesAina::WeightedBehavior> BehaviorsList = {
+        BlendedSteeringNeesAina::WeightedBehavior(SeekBehavior, 0.0f),
+        BlendedSteeringNeesAina::WeightedBehavior(FleeBehavior, 0.0f),
+        BlendedSteeringNeesAina::WeightedBehavior(EvadeBehavior, 0.0f),
+        BlendedSteeringNeesAina::WeightedBehavior(WanderBehavior, 0.0f)
     };
-    BlendedEngine = MakeUnique<BlendedSteering>(BehaviorsList);
+    BlendedEngine = MakeUnique<BlendedSteeringNeesAina>(BehaviorsList);
 }
 
 EBTNodeResult::Type USteeringTask::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
