@@ -3,14 +3,14 @@
 #include "CoreMinimal.h"
 #include "BehaviorTree/BTTaskNode.h"
 #include "Items/ItemType.h"
-#include "UseItemFromInventoryTaskNeesAina.generated.h"
+#include "BTTask_UseItemFromInventoryNeesAina.generated.h"
 
 UCLASS()
-class NEESAINAZOMBIERUNTIME_API UUseItemFromInventoryTaskNeesAina : public UBTTaskNode
+class NEESAINAZOMBIERUNTIME_API UBTTask_UseItemFromInventoryNeesAina : public UBTTaskNode
 {
 	GENERATED_BODY()
 public:
-	UUseItemFromInventoryTaskNeesAina();
+	UBTTask_UseItemFromInventoryNeesAina();
 	
 protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;

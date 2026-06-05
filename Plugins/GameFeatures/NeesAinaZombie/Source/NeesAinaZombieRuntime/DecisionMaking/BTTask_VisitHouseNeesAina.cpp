@@ -1,15 +1,15 @@
-﻿#include "VisitHouseTaskNeesAina.h"
+﻿#include "BTTask_VisitHouseNeesAina.h"
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Village/House/House.h"
 #include "StudentPerceptorNeesAina.h"
 
-UVisitHouseTaskNeesAina::UVisitHouseTaskNeesAina()
+UBTTask_VisitHouseNeesAina::UBTTask_VisitHouseNeesAina()
 {
 	NodeName = "Visit House";
 }
 
-EBTNodeResult::Type UVisitHouseTaskNeesAina::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+EBTNodeResult::Type UBTTask_VisitHouseNeesAina::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	AAIController* AIController = OwnerComp.GetAIOwner();
 	UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();

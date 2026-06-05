@@ -1,6 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
@@ -12,6 +10,18 @@
 
 class ABaseItem;
 class AHouse;
+
+USTRUCT(BlueprintType)
+struct FHouseMemoryLayout
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	AHouse* HouseActor = nullptr;
+
+	UPROPERTY()
+	TArray<FVector> CalculatedEntrances;
+};
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class NEESAINAZOMBIERUNTIME_API UStudentPerceptorNeesAina : public UActorComponent
@@ -31,9 +41,10 @@ public:
 	UPROPERTY(Transient)
 	TArray<ABaseItem*> KnownItems;
 	UPROPERTY(Transient)
-	TArray<AHouse*> DiscoveredHouses;
-	UPROPERTY(Transient)
 	TArray<AHouse*> VisitedHouses;
+
+	UPROPERTY()
+	TMap<AHouse*, FHouseMemoryLayout> HouseEntranceMemory;
 	
 	UPROPERTY()
 	TMap<AActor*, float> TrackedZombies;

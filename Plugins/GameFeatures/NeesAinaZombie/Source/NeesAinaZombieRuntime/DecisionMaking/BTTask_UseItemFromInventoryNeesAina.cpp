@@ -1,15 +1,15 @@
-﻿#include "UseItemFromInventoryTaskNeesAina.h"
+﻿#include "BTTask_UseItemFromInventoryNeesAina.h"
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Common/InventoryComponent.h"
 #include "Items/BaseItem.h"
 
-UUseItemFromInventoryTaskNeesAina::UUseItemFromInventoryTaskNeesAina()
+UBTTask_UseItemFromInventoryNeesAina::UBTTask_UseItemFromInventoryNeesAina()
 {
     NodeName = "Use Item From Inventory";
 }
 
-EBTNodeResult::Type UUseItemFromInventoryTaskNeesAina::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+EBTNodeResult::Type UBTTask_UseItemFromInventoryNeesAina::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
     AAIController* AIController = OwnerComp.GetAIOwner();
     if (!AIController) return EBTNodeResult::Failed;

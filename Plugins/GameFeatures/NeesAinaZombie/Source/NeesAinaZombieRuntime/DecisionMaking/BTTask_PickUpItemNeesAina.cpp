@@ -1,16 +1,16 @@
-﻿#include "PickUpItemTaskNeesAina.h"
+﻿#include "BTTask_PickUpItemNeesAina.h"
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Items/BaseItem.h"
 #include "StudentPerceptorNeesAina.h"
 #include "Common/InventoryComponent.h" 
 
-UPickUpItemTaskNeesAina::UPickUpItemTaskNeesAina()
+UBTTask_PickUpItemNeesAina::UBTTask_PickUpItemNeesAina()
 {
 	NodeName = "Pick Up Target Item";
 }
 
-EBTNodeResult::Type UPickUpItemTaskNeesAina::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+EBTNodeResult::Type UBTTask_PickUpItemNeesAina::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	AAIController* AIController = OwnerComp.GetAIOwner();
 	UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();

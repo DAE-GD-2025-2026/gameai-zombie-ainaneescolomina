@@ -3,14 +3,14 @@
 #include "CoreMinimal.h"
 #include "BehaviorTree/BTTaskNode.h"
 #include "Items/ItemType.h"
-#include "UseWeaponTaskNeesAina.generated.h"
+#include "BTTask_UseWeaponNeesAina.generated.h"
 
 UCLASS()
-class NEESAINAZOMBIERUNTIME_API UUseWeaponTaskNeesAina : public UBTTaskNode
+class NEESAINAZOMBIERUNTIME_API UBTTask_UseWeaponNeesAina : public UBTTaskNode
 {
 	GENERATED_BODY()
 public:
-	UUseWeaponTaskNeesAina();
+	UBTTask_UseWeaponNeesAina();
 	
 protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;

@@ -2,14 +2,14 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/BTTaskNode.h"
-#include "VisitHouseTaskNeesAina.generated.h"
+#include "BTTask_VisitHouseNeesAina.generated.h"
 
 UCLASS()
-class NEESAINAZOMBIERUNTIME_API UVisitHouseTaskNeesAina : public UBTTaskNode
+class NEESAINAZOMBIERUNTIME_API UBTTask_VisitHouseNeesAina : public UBTTaskNode
 {
 	GENERATED_BODY()
 public:
-	UVisitHouseTaskNeesAina();
+	UBTTask_VisitHouseNeesAina();
 	
 protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
