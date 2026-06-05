@@ -32,8 +32,6 @@ void UStudentPerceptorNeesAina::BeginPlay()
 void UStudentPerceptorNeesAina::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
 	if (!Actor) return;
-
-	bool isSensed = Stimulus.WasSuccessfullySensed();
 	
 	// AI Controller
 	AAIController* AIController = Cast<AAIController>(GetOwner());
@@ -61,6 +59,8 @@ void UStudentPerceptorNeesAina::OnPerceptionUpdated(AActor* Actor, FAIStimulus S
 			return;
 		}
 	}
+	
+	bool isSensed = Stimulus.WasSuccessfullySensed();
 	
 	if (Actor->IsA(ABaseZombie::StaticClass()))
 	{
@@ -301,25 +301,39 @@ void UStudentPerceptorNeesAina::RecordHouse(AActor* House, bool IsSensed, class 
         HouseMemoryMap.Add(CastHouse, NewHouseData);
     }
 
-    // TARGET SELECTION: Find the closest unlooted building
-    AHouse* BestHouseTarget = nullptr;
-    float MinDistSq = MAX_FLT;
     FVector MyLoc = GetOwner()->GetActorLocation();
-
-    for (auto& Pair : HouseMemoryMap)
-    {
-        if (Pair.Value.bHasBeenLooted) continue;
-
-        float DistSq = FVector::DistSquared(MyLoc, Pair.Key->GetActorLocation());
-        if (DistSq < MinDistSq)
-        {
-            MinDistSq = DistSq;
-            BestHouseTarget = Pair.Key;
-        }
-    }
+    AHouse* BestHouseTarget = GetClosestUnlootedHouse(MyLoc);
 
     if (BestHouseTarget)
     {
         BlackboardComp->SetValueAsObject(FName("TargetHouse"), BestHouseTarget);
     }
+    else
+    {
+        // If every known house looted, clear the key
+        BlackboardComp->ClearValue(FName("TargetHouse"));
+    }
+}
+
+AHouse* UStudentPerceptorNeesAina::GetClosestUnlootedHouse(const FVector& OriginLocation, float MaxDistance)
+{
+	AHouse* BestHouse = nullptr;
+	float MinDistSq = MaxDistance == MAX_FLT ? MAX_FLT : FMath::Square(MaxDistance);
+
+	for (auto& Pair : HouseMemoryMap)
+	{
+		if (Pair.Value.bHasBeenLooted) continue;
+
+		if (IsValid(Pair.Key))
+		{
+			float DistSq = FVector::DistSquared(OriginLocation, Pair.Key->GetActorLocation());
+			if (DistSq < MinDistSq)
+			{
+				MinDistSq = DistSq;
+				BestHouse = Pair.Key;
+			}
+		}
+	}
+
+	return BestHouse;
 }

@@ -12,7 +12,8 @@ void UBTTask_RunAwayNeesAina::TickTask(UBehaviorTreeComponent& OwnerComp, uint8*
 
 	AActor* Enemy = Cast<AActor>(BlackboardComp->GetValueAsObject(FName("TargetEnemy")));
 	bool bInPurgeZone = BlackboardComp->GetValueAsBool(FName("InPurgeZone"));
-
+	AActor* TargetHouse = Cast<AActor>(BlackboardComp->GetValueAsObject(FName("TargetHouse")));
+	
 	// Prioritize fleeing from Purge Zone
 	if (bInPurgeZone && BlackboardComp->IsVectorValueSet(FName("PurgeZoneLocation")))
 	{
@@ -30,9 +31,23 @@ void UBTTask_RunAwayNeesAina::TickTask(UBehaviorTreeComponent& OwnerComp, uint8*
             
 		FleeBehavior->SetTarget(Target);
 		EvadeBehavior->SetTarget(Target);
-		SetWeight(FleeBehavior, 0.80f);
-		SetWeight(WanderBehavior, 0.20f);
 		bHasThreat = true;
+		
+		if (TargetHouse)
+		{
+			FTargetData HouseTarget;
+			HouseTarget.Position = FVector2D(TargetHouse->GetActorLocation().X, TargetHouse->GetActorLocation().Y);
+			SeekBehavior->SetTarget(HouseTarget);
+
+			SetWeight(FleeBehavior, 0.70f);
+			SetWeight(SeekBehavior, 0.20f);
+			SetWeight(WanderBehavior, 0.10f);
+		}
+		else
+		{
+			SetWeight(FleeBehavior, 0.80f);
+			SetWeight(WanderBehavior, 0.20f);
+		}
 	}
 
 	if (!bHasThreat)

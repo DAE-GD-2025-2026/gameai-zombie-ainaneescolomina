@@ -46,6 +46,7 @@ public:
 	UPROPERTY()
 	TMap<AHouse*, FHouseData> HouseMemoryMap;
 	FHouseData* GetHouseData(AHouse* HouseKey){ return HouseMemoryMap.Find(HouseKey); }
+	AHouse* GetClosestUnlootedHouse(const FVector& OriginLocation, float MaxDistance = MAX_FLT);
 	
 	UPROPERTY()
 	TMap<AActor*, float> TrackedZombies;
