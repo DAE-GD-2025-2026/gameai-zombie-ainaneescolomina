@@ -252,120 +252,74 @@ void UStudentPerceptorNeesAina::RecordItem(AActor* Item, bool IsSensed, class UB
 void UStudentPerceptorNeesAina::RecordHouse(AActor* House, bool IsSensed, class UBlackboardComponent* BlackboardComp)
 {
 	AHouse* CastHouse = Cast<AHouse>(House);
-    if (!CastHouse) return;
+    if (!CastHouse || !IsSensed || !BlackboardComp) return;
 
-    if (IsSensed)
+    if (!HouseMemoryMap.Contains(CastHouse))
     {
-        VisitedHouses.AddUnique(CastHouse);
+        FHouseData NewHouseData;
+        NewHouseData.HouseActor = CastHouse;
 
-        // Analyze and map the entrance openings if this building is new to our memory
-        if (!HouseEntranceMemory.Contains(CastHouse))
+        FHouseBounds Bounds = CastHouse->GetBounds();
+        FVector WorldMin = Bounds.Origin - Bounds.Extent;
+        FVector WorldMax = Bounds.Origin + Bounds.Extent;
+
+        FCollisionQueryParams TraceParams(FName(TEXT("PerceptorPerimeterScan")), true, CastHouse);
+        
+        TArray<FVector> ScanPoints;
+        TArray<FVector> Directions;
+        float InterpSteps[3] = { 0.25f, 0.50f, 0.75f };
+
+        for (float Alpha : InterpSteps)
         {
-            FHouseBounds Bounds = CastHouse->GetBounds();
+            float LerpX = FMath::Lerp(WorldMin.X, WorldMax.X, Alpha);
+            float LerpY = FMath::Lerp(WorldMin.Y, WorldMax.Y, Alpha);
+
+            ScanPoints.Add(FVector(WorldMax.X + 20.f, LerpY, 15.f));  Directions.Add(FVector(-1.f, 0.f, 0.f)); // North
+            ScanPoints.Add(FVector(WorldMin.X - 20.f, LerpY, 15.f));  Directions.Add(FVector(1.f, 0.f, 0.f));  // South
+            ScanPoints.Add(FVector(LerpX, WorldMax.Y + 20.f, 15.f));  Directions.Add(FVector(0.f, -1.f, 0.f)); // East
+            ScanPoints.Add(FVector(LerpX, WorldMin.Y - 20.f, 15.f));  Directions.Add(FVector(0.f, 1.f, 0.f));  // West
+        }
+
+        for (int32 i = 0; i < ScanPoints.Num(); ++i)
+        {
+            FVector EndPoint = ScanPoints[i] + (Directions[i] * 80.f);
+            FHitResult Hit;
             
-            FVector WorldMin = Bounds.Origin - Bounds.Extent;
-            FVector WorldMax = Bounds.Origin + Bounds.Extent;
-
-            float MidX = Bounds.Origin.X;
-            float MidY = Bounds.Origin.Y;
-
-            // Establish 4 scan origins positioned 50 units outside the bounds facing inward
-            TArray<FVector> ScanOrigins;
-            ScanOrigins.Add(FVector(WorldMax.X + 50.f, MidY, 15.f));  // North Face Approach
-            ScanOrigins.Add(FVector(WorldMin.X - 50.f, MidY, 15.f));  // South Face Approach
-            ScanOrigins.Add(FVector(MidX, WorldMax.Y + 50.f, 15.f));  // East Face Approach
-            ScanOrigins.Add(FVector(MidX, WorldMin.Y - 50.f, 15.f));  // West Face Approach
-
-            FHouseMemoryLayout LayoutData;
-            LayoutData.HouseActor = CastHouse;
-
-            FCollisionQueryParams TraceParams(FName(TEXT("EntranceScan")), true, CastHouse);
-
-            for (const FVector& TraceStart : ScanOrigins)
+            if (!GetWorld()->LineTraceSingleByChannel(Hit, ScanPoints[i], EndPoint, ECC_WorldStatic, TraceParams))
             {
-                FVector TraceEnd = FVector(MidX, MidY, 15.f); // Target house center
-                FHitResult HitResult;
-
-                // Raycast looking for walls
-                bool bHitWall = GetWorld()->LineTraceSingleByChannel(
-                    HitResult, 
-                    TraceStart, 
-                    TraceEnd, 
-                    ECC_WorldStatic, 
-                    TraceParams
-                );
-            	
-                if (!bHitWall || (HitResult.Distance > 100.f))
-                {
-                    FVector EntryDirection = (TraceEnd - TraceStart).GetSafeNormal();
-                    FVector PaddedEntrance = TraceStart + (EntryDirection * 125.f); 
-                    
-                    LayoutData.CalculatedEntrances.Add(PaddedEntrance);
-                }
+                FVector SafeEntrancePos = ScanPoints[i] + (Directions[i] * 150.f);
+                NewHouseData.DiscoveredEntrances.Add(SafeEntrancePos);
             }
+        }
 
-            // Fallback
-            if (LayoutData.CalculatedEntrances.Num() == 0)
-            {
-                LayoutData.CalculatedEntrances.Add(Bounds.Origin);
-            }
+        // Fallback: If no door was found, use center point
+        if (NewHouseData.DiscoveredEntrances.Num() == 0)
+        {
+            NewHouseData.DiscoveredEntrances.Add(Bounds.Origin);
+        }
 
-            HouseEntranceMemory.Add(CastHouse, LayoutData);
+        HouseMemoryMap.Add(CastHouse, NewHouseData);
+    }
+
+    // TARGET SELECTION: Find the closest unlooted building
+    AHouse* BestHouseTarget = nullptr;
+    float MinDistSq = MAX_FLT;
+    FVector MyLoc = GetOwner()->GetActorLocation();
+
+    for (auto& Pair : HouseMemoryMap)
+    {
+        if (Pair.Value.bHasBeenLooted) continue;
+
+        float DistSq = FVector::DistSquared(MyLoc, Pair.Key->GetActorLocation());
+        if (DistSq < MinDistSq)
+        {
+            MinDistSq = DistSq;
+            BestHouseTarget = Pair.Key;
         }
     }
-	
-    // Choose the closest entrance
-    if (VisitedHouses.Num() > 0)
+
+    if (BestHouseTarget)
     {
-       AHouse* BestHouse = nullptr;
-       FVector ChosenEntranceVector = FVector::ZeroVector;
-       float MinDistSqUnvisited = MAX_FLT;
-       float MinDistSqVisited = MAX_FLT;
-       AHouse* FallbackVisitedHouse = nullptr;
-       FVector FallbackEntranceVector = FVector::ZeroVector;
-       
-       FVector MyLoc = GetOwner()->GetActorLocation();
-
-       for (AHouse* CurrentHouse : VisitedHouses)
-       {
-          if (!CurrentHouse) continue;
-
-          // Pull up our structural memory array for this building
-          if (FHouseMemoryLayout* Layout = HouseEntranceMemory.Find(CurrentHouse))
-          {
-              for (const FVector& EntrancePos : Layout->CalculatedEntrances)
-              {
-                  float DistSq = FVector::DistSquared(MyLoc, EntrancePos);
-
-                  if (!VisitedHouses.Contains(CurrentHouse))
-                  {
-                     if (DistSq < MinDistSqUnvisited)
-                     {
-                        MinDistSqUnvisited = DistSq;
-                        BestHouse = CurrentHouse;
-                        ChosenEntranceVector = EntrancePos; // Track closest entryway
-                     }
-                  }
-                  else
-                  {
-                     if (DistSq < MinDistSqVisited)
-                     {
-                        MinDistSqVisited = DistSq;
-                        FallbackVisitedHouse = CurrentHouse;
-                        FallbackEntranceVector = EntrancePos; // Track backup entryway
-                     }
-                  }
-              }
-          }
-       }
-
-       AHouse* FinalHouseTarget = (BestHouse != nullptr) ? BestHouse : FallbackVisitedHouse;
-       FVector FinalEntranceTarget = (BestHouse != nullptr) ? ChosenEntranceVector : FallbackEntranceVector;
-
-       if (FinalHouseTarget)
-       {
-          BlackboardComp->SetValueAsObject(FName("TargetHouse"), FinalHouseTarget);
-          BlackboardComp->SetValueAsVector(FName("TargetHouseEntrance"), FinalEntranceTarget);
-       }
+        BlackboardComp->SetValueAsObject(FName("TargetHouse"), BestHouseTarget);
     }
 }

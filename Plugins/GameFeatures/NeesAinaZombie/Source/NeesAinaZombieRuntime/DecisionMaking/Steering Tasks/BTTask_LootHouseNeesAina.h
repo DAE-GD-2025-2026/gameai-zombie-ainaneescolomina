@@ -10,7 +10,7 @@ class NEESAINAZOMBIERUNTIME_API UBTTask_LootHouseNeesAina : public UBTTask_BaseS
 	GENERATED_BODY()
 public:
 	UBTTask_LootHouseNeesAina() { NodeName = "Loot House Steering"; }
-	
 protected:
+	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 	virtual void TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 };

@@ -43,8 +43,17 @@ void UBTTask_BaseSteeringNeesAina::SetWeight(ISteeringBehavior* Behavior, float 
     }
 }
 
+void UBTTask_BaseSteeringNeesAina::ResetStuckState()
+{
+    StuckDuration = 0.0f;
+    DetourDuration = 0.0f;
+    DetourVector = FVector::ZeroVector;
+    LastTrackedPos = FVector::ZeroVector;
+}
+
 EBTNodeResult::Type UBTTask_BaseSteeringNeesAina::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
+    ResetStuckState();    
     return EBTNodeResult::InProgress;
 }
 
@@ -57,6 +66,69 @@ void UBTTask_BaseSteeringNeesAina::TickTask(UBehaviorTreeComponent& OwnerComp, u
     APawn* Survivor = AIController->GetPawn();
     if (!Survivor) return;
 
+    FVector SurvivorLoc = Survivor->GetActorLocation();
+
+    // Fix if Agent is stuck
+    if (DetourDuration > 0.0f)
+    {
+        DetourDuration -= DeltaSeconds;
+        FTargetData DetourTarget;
+        DetourTarget.Position = FVector2D(DetourVector.X, DetourVector.Y);
+        SeekBehavior->SetTarget(DetourTarget);
+        ResetWeights();
+        SetWeight(SeekBehavior, 1.0f);
+    }
+    else
+    {
+        if (!LastTrackedPos.IsZero() && FVector::DistSquared(SurvivorLoc, LastTrackedPos) < 25.0f)
+        {
+            StuckDuration += DeltaSeconds;
+            if (StuckDuration >= StuckThresholdTime)
+            {
+                FVector TargetVelocityVec = CurrentTaskTarget - SurvivorLoc; 
+                TargetVelocityVec.Z = 0.f;
+                FVector StraightHeading = TargetVelocityVec.GetSafeNormal();
+                
+                // Get the final rotation angle
+                float BaseTurnAngle = FMath::DegreesToRadians(90.0f + StuckAngleModifier);
+                float RotatedX = StraightHeading.X * FMath::Cos(BaseTurnAngle) - StraightHeading.Y * FMath::Sin(BaseTurnAngle);
+                float RotatedY = StraightHeading.X * FMath::Sin(BaseTurnAngle) + StraightHeading.Y * FMath::Cos(BaseTurnAngle);
+                
+                FVector EscapeDirection = FVector(RotatedX, RotatedY, 0.0f);
+                EscapeDirection.Normalize();
+                
+                DetourVector = SurvivorLoc + (EscapeDirection * 200.0f);
+                DetourDuration = 0.75f;
+                StuckDuration = 0.0f;
+                
+                //StuckAngleModifier += 45.0f;
+
+                FTargetData DetourTarget;
+                DetourTarget.Position = FVector2D(DetourVector.X, DetourVector.Y);
+                SeekBehavior->SetTarget(DetourTarget);
+                ResetWeights();
+                SetWeight(SeekBehavior, 1.0f);
+            }
+        }
+        else
+        {
+            StuckDuration = FMath::Max(0.0f, StuckDuration - DeltaSeconds);
+            
+            if (FVector::DistSquared(SurvivorLoc, LastTrackedPos) >= 50.0f)
+            {
+                StuckAngleModifier = 0.0f;
+            }
+        }
+    }
+    LastTrackedPos = SurvivorLoc;
+    
+    if (DetourDuration <= 0.0f)
+    {
+        FTargetData NormalTarget;
+        NormalTarget.Position = FVector2D(CurrentTaskTarget.X, CurrentTaskTarget.Y);
+        SeekBehavior->SetTarget(NormalTarget);
+    }
+    
     SteeringOutput Output = BlendedEngine->CalculateSteering(DeltaSeconds, Survivor);
 
     // Dynamic Sprint Controls

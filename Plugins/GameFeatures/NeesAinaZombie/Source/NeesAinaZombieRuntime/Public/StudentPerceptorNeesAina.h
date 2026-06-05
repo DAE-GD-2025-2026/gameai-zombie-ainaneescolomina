@@ -12,7 +12,7 @@ class ABaseItem;
 class AHouse;
 
 USTRUCT(BlueprintType)
-struct FHouseMemoryLayout
+struct FHouseData
 {
 	GENERATED_BODY()
 
@@ -20,7 +20,9 @@ struct FHouseMemoryLayout
 	AHouse* HouseActor = nullptr;
 
 	UPROPERTY()
-	TArray<FVector> CalculatedEntrances;
+	TArray<FVector> DiscoveredEntrances;
+
+	bool bHasBeenLooted = false;
 };
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -44,11 +46,12 @@ public:
 	TArray<AHouse*> VisitedHouses;
 
 	UPROPERTY()
-	TMap<AHouse*, FHouseMemoryLayout> HouseEntranceMemory;
+	TMap<AHouse*, FHouseData> HouseMemoryMap;
+	FHouseData* GetHouseData(AHouse* HouseKey){ return HouseMemoryMap.Find(HouseKey); }
 	
 	UPROPERTY()
 	TMap<AActor*, float> TrackedZombies;
-	const float ZombieMemoryDuration = 0.8f; // How long do you remember a Zombie for
+	const float ZombieMemoryDuration = 0.4f; // How long do you remember a Zombie for
 
 private:
 	void CheckZombie(AActor* Zombie, bool IsSensed, class UBlackboardComponent* BlackboardComp);
