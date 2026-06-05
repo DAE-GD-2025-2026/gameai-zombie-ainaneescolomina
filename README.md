@@ -1,6 +1,7 @@
-# Autonomous Survivor AI — Unreal Engine Framework
+# Zombie Survival - Algorithms 2 Final Exam
+> — **Aina Nees Colomina**, *2DAE GD 09*
 
-The objective of this project is to maximize the lifespan of an autonomous survival agent within a volatile threat ecosystem. By separating cognitive decision-making from locomotive physics, the system evaluates internal vital stats, manages structural navigation memory, and applies fluid steering forces to independently balance resource scavenging, tactical combat, and adaptive hazard avoidance.
+An ai zombie survival agent designed to maximize lifespan. It features smart decision-making algorithms to track vitals, manage inventory, and houses, while a custom-blended steering engine allows it to dynamically dodge threats, seek loot, and wander.
 
 ---
 
